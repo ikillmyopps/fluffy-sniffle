@@ -1,0 +1,82 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Styles unchanged */
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Existing JavaScript code unchanged
+
+      function endTurn() {
+        clearInterval(timerInterval);
+        if (multiplayerMode) {
+          players[currentPlayerIndex].score += score;
+          currentPlayerIndex++;
+
+          if (currentPlayerIndex === players.length) {
+            currentPlayerIndex = 0;
+            fetch('/update_leaderboard', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ name: players[currentPlayerIndex].name, score: players[currentPlayerIndex].score })
+            })
+            .then(response => response.json())
+            .then(updatedLeaderboard => {
+              document.getElementById('leaderboard').innerText = 'Leaderboard:\n';
+              updatedLeaderboard.forEach(player => {
+                document.getElementById('leaderboard').innerText += `${player.name}: ${player.score}\n`;
+              });
+            });
+          }
+
+          score = 0;
+          startGame(document.getElementById('difficultySelect').value, players[currentPlayerIndex].name);
+        } else {
+          score = 0;
+          startGame(document.getElementById('difficultySelect').value);
+        }
+      }
+
+      // Additional function to fetch high scores from the server
+      function fetchHighScores() {
+        fetch('/get_leaderboard')
+          .then(response => response.json())
+          .then(leaderboard => {
+            document.getElementById('leaderboard').innerText = 'Leaderboard:\n';
+            leaderboard.forEach(player => {
+              document.getElementById('leaderboard').innerText += `${player.name}: ${player.score}\n`;
+            });
+          });
+      }
+
+      // Start the game on page load
+      startGame('medium');
+      // Fetch high scores
+      fetchHighScores();
+    });
+  </script>
+</head>
+<body>
+  <h1>Even More Advanced Guessing Game</h1>
+  <div id="result"></div>
+  <div id="attempts"></div>
+  <div id="score"></div>
+  <div id="timer"></div>
+  <div id="leaderboard"></div>
+  <select id="difficultySelect">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+  <input type="text" id="playerName" placeholder="Enter your name (Multiplayer)">
+  <button id="submitBtn">Submit Guess</button>
+  <button id="newGameBtn">New Game</button>
+  <button id="startMultiplayerBtn">Start Multiplayer</button>
+</body>
+</html>
